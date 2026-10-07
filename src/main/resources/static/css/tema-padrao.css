@@ -1,28 +1,10 @@
-/* Tema padrão do login-sigee-java.
- * Para criar um tema novo: copie este arquivo para tema-<nome>.css,
- * ajuste as variáveis abaixo e defina APP_TEMA_NOME=<nome> no .env.
- * Nenhum arquivo Java ou template precisa ser alterado. */
+/* Copie para tema-<nome>.css e selecione o arquivo com APP_TEMA_NOME. */
 :root {
     --tema-sidebar-fundo: #343a40;
-    --tema-sidebar-texto: #ffffff;
+    --tema-sidebar-texto: #fff;
     --tema-sidebar-hover: #495057;
     --tema-fundo: #f8f9fa;
     --tema-primaria: #0d6efd;
 }
-
-body.tema-padrao {
-    background-color: var(--tema-fundo);
-}
-
-body.tema-padrao #sidebar {
-    background-color: var(--tema-sidebar-fundo);
-    color: var(--tema-sidebar-texto);
-}
-
-body.tema-padrao #sidebar a {
-    color: var(--tema-sidebar-texto);
-}
-
-body.tema-padrao #sidebar a:hover {
-    background-color: var(--tema-sidebar-hover);
-}
+body { background-color: var(--tema-fundo); }
+.btn-primary { --bs-btn-bg: var(--tema-primaria); --bs-btn-border-color: var(--tema-primaria); }

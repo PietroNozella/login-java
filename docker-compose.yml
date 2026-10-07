@@ -1,16 +1,16 @@
 services:
   mongo:
     image: mongo:7
-    container_name: login-sigee-mongo
+    container_name: login-java-mongo
     ports:
       - "27018:27017"
     volumes:
-      - login-sigee-mongo-data:/data/db
+      - login-java-mongo-data:/data/db
     restart: unless-stopped
 
   mailpit:
     image: axllent/mailpit:v1.21
-    container_name: login-sigee-mailpit
+    container_name: login-java-mailpit
     ports:
       - "1025:1025"
       - "8025:8025"
@@ -18,7 +18,7 @@ services:
 
   app:
     build: .
-    container_name: login-sigee-app
+    container_name: login-java-app
     ports:
       - "8080:8080"
     depends_on:
@@ -28,10 +28,10 @@ services:
       - path: .env
         required: false
     environment:
-      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/loginsigee}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/login_java}
       SMTP_HOST: ${SMTP_HOST:-mailpit}
       APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:?Defina APP_ADMIN_PASSWORD no arquivo .env}
     restart: unless-stopped
 
 volumes:
-  login-sigee-mongo-data:
+  login-java-mongo-data:

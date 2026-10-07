@@ -1,78 +1,49 @@
-# Login SIGEE em Java
+# Login Java
 
-Sistema modular de autenticação e autorização desenvolvido com Java 21, Spring Boot 3.4,
-Spring Security, Thymeleaf e MongoDB. Usuários e sessões HTTP são persistidos no MongoDB.
+Aplicação de autenticação reutilizável em Java 21, Spring Boot 3.4, Spring Security,
+Thymeleaf e MongoDB. A interface está em português brasileiro.
 
 ## Funcionalidades
 
-- login e logout por sessão, com CSRF habilitado;
-- cadastro de usuários restrito ao perfil `ADMINISTRADOR`;
-- perfis `ADMINISTRADOR`, `OPERADOR` e `PROFESSOR`;
-- senhas protegidas com BCrypt;
-- bloqueio temporário após cinco tentativas inválidas;
-- recuperação de senha por link enviado por e-mail, com token de uso único;
-- aceite versionado dos termos e registro de auditoria;
-- templates Thymeleaf e fragmentos reutilizáveis.
+- Cadastro público em `/cadastro`, sempre com perfil `USUARIO`.
+- Cadastro administrativo em `/usuarios/novo`, com seleção de `USUARIO` ou `ADMINISTRADOR`.
+- Login por nome de usuário, logout por POST e sessões persistidas no MongoDB.
+- Senhas com BCrypt e proteção CSRF nos formulários.
+- Bloqueio da conta por 15 minutos após cinco tentativas inválidas.
+- Troca de senha e recuperação por e-mail com token de uso único, válido por 60 minutos.
+- Aceite versionado dos termos e da privacidade após o login.
+- Auditoria de autenticação e ações de conta, acessível somente ao administrador.
 
-## Estrutura
+Não há confirmação de e-mail, MFA ou login social. Os documentos legais são modelos
+que precisam ser adaptados pelo responsável pela implantação.
 
-```text
-src/main/java/com/pfc/
-├── security/                 # handlers e interceptadores de segurança
-└── thindesk/
-    ├── controller/           # rotas MVC e API
-    ├── dto/                  # validação das entradas dos formulários
-    ├── entity/               # documentos persistidos no MongoDB
-    ├── repository/           # acesso ao MongoDB
-    └── service/              # regras de negócio
+## Executar com Docker
 
-src/main/resources/
-├── static/                   # CSS, JavaScript e imagens
-└── templates/                # páginas e fragmentos Thymeleaf
-```
-
-As regras de autenticação ficam centralizadas no Spring Security. Controllers recebem e
-validam os dados, services aplicam as regras e repositories cuidam da persistência. Essa
-separação permite trocar textos, imagens e templates sem alterar a lógica de login.
-
-## Temas visuais
-
-O `layout.html` aplica a classe `tema-<nome>` no `<body>` (valor de `APP_TEMA_NOME`,
-padrão `padrao`, exposto via `TemaControllerAdvice`) e carrega
-`static/css/tema-padrao.css`, que define as cores em variáveis CSS (`--tema-*`).
-
-Para criar um tema novo:
-
-1. Copie `static/css/tema-padrao.css` para `static/css/tema-<nome>.css` e ajuste as variáveis.
-2. Defina `APP_TEMA_NOME=<nome>` no `.env`.
-3. Opcional: ajuste `fragments/sidebar.html` e `images/logo.png`.
-
-Nenhum arquivo Java precisa ser alterado.
-
-## Execução com Docker
-
-Pré-requisito: Docker com Compose.
+Pré-requisito: Docker com Compose em execução.
 
 ```powershell
 Copy-Item .env.example .env
-# Defina uma senha forte em APP_ADMIN_PASSWORD no arquivo .env
+# Substitua APP_ADMIN_PASSWORD por uma senha forte antes de iniciar.
 docker compose up --build
 ```
 
-- aplicação: `http://localhost:8080/login`
-- caixa de e-mail local do Mailpit: `http://localhost:8025`
-- MongoDB local: `localhost:27018`
+- Aplicação: `http://localhost:8080/login`
+- Caixa de e-mail local do Mailpit: `http://localhost:8025`
+- MongoDB: `localhost:27018`, banco padrão `login_java`
 
-O Dockerfile possui build em duas etapas e gera o JAR automaticamente. Não é necessário
-ter Maven ou Java instalados na máquina para executar dessa forma.
+O Dockerfile compila o projeto e gera o JAR. A primeira conta administrativa é
+criada com as variáveis `APP_ADMIN_*`; reinícios não sobrescrevem uma conta existente.
+O nome do administrador inicial fica reservado para essa conta.
 
-## Execução local sem Docker
+## Executar localmente
 
-Pré-requisitos: Java 21 e um MongoDB acessível.
+Pré-requisitos: Java 21 e MongoDB acessível. Build e testes são validados com Java 21.
+Para usar o MongoDB e o Mailpit do Compose com a aplicação fora do Docker:
 
 ```powershell
-$env:MONGODB_URI="mongodb://localhost:27017/loginsigee"
-$env:MONGODB_DATABASE="loginsigee"
+docker compose up -d mongo mailpit
+$env:MONGODB_URI="mongodb://localhost:27018/login_java"
+$env:MONGODB_DATABASE="login_java"
 $env:APP_ADMIN_PASSWORD="defina-uma-senha-forte"
 $env:SMTP_HOST="localhost"
 $env:SMTP_PORT="1025"
@@ -80,25 +51,38 @@ $env:APP_BASE_URL="http://localhost:8080"
 .\mvnw.cmd spring-boot:run
 ```
 
-## MongoDB Atlas
+O Maven Wrapper fornece o Maven. Na execução local, `.env` não é carregado
+automaticamente: use as variáveis do processo como no exemplo.
 
-1. Crie um cluster no Atlas e um usuário de banco com acesso ao database do sistema.
-2. Autorize o IP da máquina ou do ambiente onde a aplicação será executada.
-3. Copie a connection string do driver Java e defina as variáveis abaixo:
+## Configuração e personalização
 
-```env
-MONGODB_URI=mongodb+srv://USUARIO:SENHA@CLUSTER.mongodb.net/loginsigee?retryWrites=true&w=majority
-MONGODB_DATABASE=loginsigee
-```
+| Variável | Uso | Padrão |
+| --- | --- | --- |
+| `APP_NOME` | Nome exibido nos títulos e na navegação | `Sistema de Login` |
+| `APP_TEMA_NOME` | Arquivo de tema visual | `padrao` |
+| `APP_BASE_URL` | Endereço público usado nos links de recuperação | `http://localhost:8080` |
+| `MONGODB_URI` | Conexão do MongoDB | `mongodb://localhost:27017/login_java` |
+| `MONGODB_DATABASE` | Nome do banco | `login_java` |
+| `APP_ADMIN_USERNAME` | Usuário do administrador inicial | `admin` |
+| `APP_ADMIN_PASSWORD` | Senha do administrador inicial | Obrigatória |
+| `APP_ADMIN_EMAIL` | E-mail do administrador inicial | `admin@local` |
+| `APP_ADMIN_NOME` | Nome do administrador inicial | `Administrador` |
+| `SESSION_TIMEOUT` | Tempo de inatividade da sessão | `30m` |
 
-Caracteres especiais do usuário e da senha precisam estar codificados para URL. A URI deve
-ficar somente no `.env` ou nas variáveis do ambiente de hospedagem; o `.env` está ignorado
-pelo Git. O mesmo MongoDB armazena usuários, tokens, auditoria, dados funcionais e a coleção
-`sessions` mantida pelo Spring Session.
+Para um novo tema, copie `static/css/tema-padrao.css` para `tema-<nome>.css`,
+altere as variáveis CSS e configure `APP_TEMA_NOME=<nome>`. O tema padrão é
+carregado primeiro e o novo arquivo sobrescreve suas variáveis.
 
-## Configuração de e-mail
+O banco contém `usuarios`, `password_reset_tokens`, `auditoria` e `sessions`.
+A aplicação não migra nem exclui bancos ou volumes de versões anteriores.
 
-A recuperação não mostra o token na tela. O link é enviado pelo servidor SMTP configurado:
+Para MongoDB Atlas, configure `MONGODB_URI` com a URI do cluster e
+`MONGODB_DATABASE` com o banco escolhido. Autorize a conexão no cluster e
+codifique caracteres especiais das credenciais na URI. Não versione senhas.
+
+## E-mail de recuperação
+
+O Compose inclui Mailpit para testes locais. Para usar um servidor SMTP:
 
 ```env
 SMTP_HOST=smtp.exemplo.com
@@ -111,14 +95,24 @@ SMTP_FROM=no-reply@exemplo.com
 APP_BASE_URL=https://sistema.exemplo.com
 ```
 
-No Docker local, o Mailpit já recebe as mensagens sem credenciais.
+A resposta de recuperação é a mesma para e-mails existentes e inexistentes.
+O token original aparece apenas no link enviado por e-mail; o banco guarda seu hash.
 
-## Testes
+## Estrutura
+
+O código está em `src/main/java/com/example/login`: configurações na raiz e
+subpacotes `controller`, `dto`, `entity`, `repository`, `security` e `service`.
+Templates e arquivos estáticos ficam em `src/main/resources`. A pasta `estudo`
+explica os fluxos e as decisões técnicas.
+
+## Testes e build
 
 ```powershell
 .\mvnw.cmd test
+.\mvnw.cmd clean package
 ```
 
-Os testes cobrem validação do cadastro, hash de senha, duplicidade de usuário e geração de
-tokens de recuperação. Para produção, mantenha `APP_ADMIN_PASSWORD`, credenciais do Atlas e
-SMTP apenas no gerenciador de variáveis secretas da plataforma.
+O JAR gerado é `target/login-java-1.0.0.jar`. A suíte cobre validação, cadastro
+público sem privilégios, duplicidade, hash de senha, bloqueio e tokens de recuperação.
+Para verificar o fluxo real, inicie MongoDB/Mailpit e percorra cadastro, login,
+aceite, troca de senha e logout; confira a recuperação na caixa de e-mail local.

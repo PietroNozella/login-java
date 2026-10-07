@@ -1,6 +1,6 @@
-<div class="container-fluid vh-100 d-flex justify-content-center align-items-center" th:fragment="content">
-    <div class="text-center">
-        <h1>Bem-vindo ao</h1>
-        <img th:src="@{/images/logo.png}" alt="Logo" width="500" height="500">
-    </div>
-</div>
+<section xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:fragment="content" class="py-4">
+    <h1 class="h3" th:text="${appNome}">Sistema de Login</h1>
+    <p>Bem-vindo, <strong sec:authentication="name">usuário</strong>.</p>
+    <p class="text-muted">Sua sessão está ativa. Use o menu para acessar as opções da conta.</p>
+    <a class="btn btn-primary" th:href="@{/minha-senha}">Trocar senha</a>
+</section>

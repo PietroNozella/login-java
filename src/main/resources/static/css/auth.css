@@ -1,0 +1,4 @@
+.login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; background: var(--tema-fundo, #f8f9fa); }
+.login-card { max-width: 440px; width: 100%; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,.12); border-radius: 8px; background: #fff; }
+.cadastro-card { max-width: 640px; }
+@media (max-width: 480px) { .login-card { padding: 1.25rem; } }

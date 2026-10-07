@@ -1,41 +1,26 @@
-# Cadastro, senhas e recovery
+# Cadastro e recuperação de senha
 
-## Cadastro só por admin (`UsuarioService.java:40-58`, `AuthController.java:49-82`)
+## Cadastro
 
-```java
-usuario.setSenha(passwordEncoder.encode(senhaInicial));
-usuario.setPerfil(perfil);
-usuario.setAtivo(true);
-```
+`CadastroPublicoForm` contém nome, sobrenome, e-mail, usuário e senha.
+`CadastroUsuarioForm` reutiliza esses campos e acrescenta o perfil, obrigatório
+somente no cadastro administrativo.
 
-- **O que faz:** cria a conta já ativa, com **um único perfil** escolhido pelo admin — nunca pelo próprio usuário (RN-18 do SIGEE).
-- **O que é hash BCrypt:** função que transforma a senha num texto irreversível com "sal" embutido. O banco guarda só o hash (`Usuario.java:22`); na hora do login o Spring recalcula e compara. Roubou o banco? Não dá para voltar à senha original.
-- **Validações:** senha inicial com mín. 8 caracteres; usuário e e-mail únicos (erro PT-BR amigável).
+O cadastro público chama `UsuarioService.cadastrarPublico`, que fixa o perfil
+`USUARIO`. Um parâmetro `perfil=ADMINISTRADOR` enviado pelo visitante não
+concede privilégios. O cadastro administrativo é protegido pelo Spring Security.
 
-## Troca de senha (`UsuarioService.java:64-74`)
+Nome, sobrenome e usuário são aparados; e-mail também é convertido para
+minúsculas. A senha não é aparada. O banco mantém índices únicos de usuário
+e e-mail. Tanto a consulta prévia quanto um conflito no salvamento resultam
+em mensagem de duplicidade, sem expor detalhes do banco.
 
-Confere a senha atual antes de gravar a nova (também com hash). Erro "Senha atual incorreta" vai para a tela e para a auditoria (`SENHA_TROCADA/FALHA`).
+## Recuperação
 
-## Esqueci minha senha (`UsuarioService.java:76-104`)
+`/esqueci-senha` sempre exibe a mesma resposta. Para uma conta existente,
+o serviço gera um token, armazena seu hash SHA-256 com validade de 60 minutos
+e envia o link pelo SMTP. O Mailpit permite conferir esse envio localmente.
 
-```java
-String tokenOriginal = UUID.randomUUID().toString().replace("-", "");
-reset.setToken(hashToken(tokenOriginal)); // SHA-256: o banco guarda só o hash
-reset.setExpiraEm(Instant.now().plus(Duration.ofMinutes(tokenMinutos)));
-```
-
-1. `POST /esqueci-senha` gera um token aleatório de uso único, válido por 60 min.
-2. Resposta **sempre igual** ("se houver conta, o link foi gerado") — não revela se o e-mail existe.
-3. O link vai por e-mail via SMTP configurado (Mailpit no Docker local); o token original nunca é persistido nem exibido em tela.
-4. `POST /redefinir-senha/{token}` valida (inexistente/usado/expirado = erro), grava a nova senha e **destrava a conta** — faz sentido: quem tem o e-mail provou ser o dono.
-
-## Bloqueio em números (`UsuarioService.java:106-126`, `Usuario.java:28-29`)
-
-```java
-private int falhasLogin = 0;
-private Instant bloqueadoAte;
-```
-
-- Cada falha soma 1; na 5ª, `bloqueadoAte = agora + 15min` e o contador zera.
-- `JpaUserDetailsService` lê `!usuario.bloqueado()` — conta travada nem chega a testar a senha.
-- Login com sucesso limpa tudo (`registrarSucesso`).
+Em `/redefinir-senha/{token}`, o serviço verifica o hash, o prazo e se o token
+já foi utilizado. A nova senha é salva com BCrypt e o token é marcado como
+usado. A redefinição também limpa o bloqueio por tentativas inválidas.

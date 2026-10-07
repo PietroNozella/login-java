@@ -9,12 +9,12 @@
         <relativePath />
     </parent>
 
-    <groupId>com.pfc</groupId>
-    <artifactId>login-sigee-java</artifactId>
+    <groupId>com.example</groupId>
+    <artifactId>login-java</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>login-sigee-java</name>
-    <description>Login completo em Java (Spring Boot + MongoDB + BCrypt) espelhando o SIGEE, sobre a base thindesk adaptada.</description>
+    <name>login-java</name>
+    <description>Autenticação genérica com cadastro, sessões, recuperação de senha e auditoria.</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
